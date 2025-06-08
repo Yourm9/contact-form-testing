@@ -1,44 +1,52 @@
 from flask import Flask, request, jsonify, render_template
-import csv, os, subprocess
+import csv, os
 from werkzeug.utils import secure_filename
+from bot import smart_contact_form_submitter
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
-RESULTS_FILE = 'results.csv'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Ensure upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-@app.route('/')
+@app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template("index.html")
 
-@app.route('/run', methods=['POST'])
+@app.route("/run", methods=["POST"])
 def run_bot():
     urls = []
 
-    # 1. If manual input is present
-    if request.form.get("manual") == "true":
-        raw = request.form.get("urls", "")
-        urls = [line.strip() for line in raw.splitlines() if line.strip()]
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part in request"}), 400
 
-    # 2. Else, process CSV file
-    elif 'file' in request.files:
-        file = request.files['file']
-        if file and file.filename.endswith('.csv'):
-            content = file.read().decode('utf-8').splitlines()
-            reader = csv.DictReader(content)
-            urls = [row['url'].strip() for row in reader if 'url' in row]
+    file = request.files["file"]
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
 
-    # 3. Run bot logic
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    file.save(filepath)
+
+    with open(filepath, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        if 'url' not in reader.fieldnames:
+            return jsonify({"error": "CSV must contain a 'url' column"}), 400
+        urls = [row['url'] for row in reader if row.get('url')]
+
     results = []
     for url in urls:
-        status = "Success"  # 🔁 Replace with real automation logic
+        try:
+            status = smart_contact_form_submitter(url)
+        except Exception as e:
+            status = f"Error: {str(e)}"
         results.append({"url": url, "status": status})
 
     return jsonify(results)
 
+if __name__ == "__main__":
+    app.run(debug=False, host="0.0.0.0", port=5000)
 
-if __name__ == '__main__':
-    import os
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+
+
