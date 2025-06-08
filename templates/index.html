@@ -14,20 +14,20 @@
 <body class="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen flex items-center justify-center">
   <div class="bg-white backdrop-blur-xl bg-opacity-80 border border-gray-300 rounded-3xl shadow-2xl p-10 w-full max-w-xl">
 
-    <!-- 🌐 CFT Logo Badge -->
+    <!-- CFT Logo Badge -->
     <div class="flex justify-center mb-6">
       <div class="w-20 h-20 rounded-full bg-black text-white flex items-center justify-center text-2xl font-semibold shadow-md border border-gray-400 tracking-wide">
         CFT
       </div>
     </div>
 
-    <!-- Heading and Subheading -->
+    <!-- Heading -->
     <div class="text-center mb-6">
       <h1 class="text-3xl font-semibold text-gray-900 tracking-tight">Contact Form Tester</h1>
       <p class="text-xs text-gray-500 mt-1">Powered by IFEL</p>
     </div>
 
-    <!-- Form -->
+    <!-- Upload Form -->
     <form id="uploadForm" class="space-y-5">
       <div>
         <label class="block font-medium mb-1 text-gray-700">Upload CSV file</label>
@@ -49,35 +49,44 @@
       </button>
     </form>
 
-    <!-- Results -->
+    <!-- Results Display -->
     <div id="results" class="mt-8 text-sm text-gray-800 space-y-2"></div>
   </div>
 
   <script>
-    const form = document.getElementById('uploadForm');
-    const resultsDiv = document.getElementById('results');
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById('uploadForm');
+      const resultsDiv = document.getElementById('results');
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(form);
-      resultsDiv.innerHTML = '<div class="text-center text-gray-500">Running...</div>';
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        resultsDiv.innerHTML = '<div class="text-center text-gray-500">Running...</div>';
 
-      const res = await fetch('/run', {
-        method: 'POST',
-        body: formData
+        try {
+          const res = await fetch('/run', {
+            method: 'POST',
+            body: formData
+          });
+
+          const data = await res.json();
+
+          if (!Array.isArray(data)) {
+            resultsDiv.innerHTML = '<div class="text-red-500">Unexpected response from server.</div>';
+            console.log('Unexpected data:', data);
+            return;
+          }
+
+          resultsDiv.innerHTML = data.map(d => `
+            <div class="bg-white border rounded-xl px-4 py-2 shadow-sm">
+              <strong>${d.url}</strong>: ${d.status}
+            </div>
+          `).join('');
+        } catch (err) {
+          resultsDiv.innerHTML = '<div class="text-red-500">Error contacting server.</div>';
+          console.error(err);
+        }
       });
-
-      const data = await res.json();
-      resultsDiv.innerHTML = data.map(d => `
-  <div class="bg-white border rounded-xl px-4 py-2 shadow-sm">
-    <strong>${d.url}</strong>: ${d.status}
-  </div>
-`).join('');
-
-        <div class="bg-white border rounded-xl px-4 py-2 shadow-sm">
-          <strong>${d.url}</strong>: ${d.status}
-        </div>
-      `).join('');
     });
   </script>
 </body>
