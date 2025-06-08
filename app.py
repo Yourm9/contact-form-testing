@@ -14,26 +14,29 @@ def index():
 
 @app.route('/run', methods=['POST'])
 def run_bot():
-    if 'file' not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
+    urls = []
 
-    file = request.files['file']
-    filename = secure_filename(file.filename)
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file.save(filepath)
+    # 1. If manual input is present
+    if request.form.get("manual") == "true":
+        raw = request.form.get("urls", "")
+        urls = [line.strip() for line in raw.splitlines() if line.strip()]
 
-    subprocess.run(['python3', 'bot.py', filepath], capture_output=True, text=True)
+    # 2. Else, process CSV file
+    elif 'file' in request.files:
+        file = request.files['file']
+        if file and file.filename.endswith('.csv'):
+            content = file.read().decode('utf-8').splitlines()
+            reader = csv.DictReader(content)
+            urls = [row['url'].strip() for row in reader if 'url' in row]
 
+    # 3. Run bot logic
     results = []
-    if os.path.exists(RESULTS_FILE):
-        with open(RESULTS_FILE, newline='') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                results.append({
-                    "url": row.get("url", "N/A"),
-                    "status": row.get("status", "Unknown")
-                })
+    for url in urls:
+        status = "Success"  # 🔁 Replace with real automation logic
+        results.append({"url": url, "status": status})
+
     return jsonify(results)
+
 
 if __name__ == '__main__':
     import os

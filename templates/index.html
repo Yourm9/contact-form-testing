@@ -24,13 +24,30 @@
     <h1 class="text-3xl font-semibold text-center text-gray-900 mb-6 tracking-tight">Contact Form Tester</h1>
 
     <form id="uploadForm" class="space-y-5">
-      <input 
-        type="file" 
-        name="file" 
-        accept=".csv" 
-        required 
-        class="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition" 
-      />
+      <!-- CSV Upload -->
+      <div>
+        <label class="block font-medium mb-1 text-gray-700">Upload CSV file</label>
+        <input 
+          type="file" 
+          name="file" 
+          accept=".csv" 
+          id="fileInput"
+          class="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition" 
+        />
+      </div>
+
+      <!-- Manual URL input -->
+      <div>
+        <label class="block font-medium mb-1 text-gray-700">Or paste URLs (one per line)</label>
+        <textarea 
+          name="manualUrls" 
+          rows="5" 
+          placeholder="https://example.com/contact" 
+          id="manualInput"
+          class="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+        ></textarea>
+      </div>
+
       <button 
         type="submit" 
         class="w-full bg-black text-white text-lg font-medium py-3 rounded-xl hover:bg-gray-800 transition-all duration-200 shadow-sm"
@@ -45,11 +62,35 @@
   <script>
     const form = document.getElementById('uploadForm');
     const resultsDiv = document.getElementById('results');
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const formData = new FormData(form);
+      const formData = new FormData();
+      const manualUrls = document.getElementById("manualInput").value.trim();
+      const file = document.getElementById("fileInput").files[0];
+
+      // Clear output area
       resultsDiv.innerHTML = '<div class="text-center text-gray-500">Running...</div>';
-      const res = await fetch('/run', { method: 'POST', body: formData });
+
+      // Send manually pasted URLs
+      if (manualUrls.length > 0) {
+        formData.append("manual", "true");
+        formData.append("urls", manualUrls);
+
+      // Or fall back to CSV file
+      } else if (file) {
+        formData.append("file", file);
+
+      } else {
+        resultsDiv.innerHTML = '<div class="text-red-600 text-center">Please provide either a CSV or manual URLs.</div>';
+        return;
+      }
+
+      const res = await fetch('/run', {
+        method: 'POST',
+        body: formData
+      });
+
       const data = await res.json();
       resultsDiv.innerHTML = data.map(d => `
         <div class="bg-white border rounded-xl px-4 py-2 shadow-sm">
