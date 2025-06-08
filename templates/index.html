@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contact Bot</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div class="bg-white p-8 rounded-xl shadow-xl max-w-xl w-full">
+    <h1 class="text-2xl font-bold mb-4 text-center">🤖 Contact Form Bot</h1>
+    <form id="uploadForm" class="space-y-4">
+      <input type="file" name="file" accept=".csv" required class="block w-full p-2 border rounded" />
+      <button type="submit" class="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700 transition">Start</button>
+    </form>
+    <div id="results" class="mt-6 text-sm"></div>
+  </div>
+  <script>
+    const form = document.getElementById('uploadForm');
+    const resultsDiv = document.getElementById('results');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      resultsDiv.innerHTML = 'Running...';
+      const res = await fetch('/run', { method: 'POST', body: formData });
+      const data = await res.json();
+      resultsDiv.innerHTML = data.map(d => `<div><strong>${d.url}</strong>: ${d.status}</div>`).join('');
+    });
+  </script>
+</body>
+</html>

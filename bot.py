@@ -5,6 +5,7 @@ from datetime import datetime
 from urllib.parse import urljoin, urlparse
 from playwright.sync_api import sync_playwright
 import re
+import sys
 
 def human_type(page, selector, text):
     page.click(selector)
@@ -127,4 +128,5 @@ def run_from_csv(file_path):
 
 # Run from CSV
 if __name__ == "__main__":
-    run_from_csv("urls.csv")
+    filepath = sys.argv[1] if len(sys.argv) > 1 else "urls.csv"
+    run_from_csv(filepath)
