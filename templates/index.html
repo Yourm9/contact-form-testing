@@ -69,6 +69,11 @@
 
       const data = await res.json();
       resultsDiv.innerHTML = data.map(d => `
+  <div class="bg-white border rounded-xl px-4 py-2 shadow-sm">
+    <strong>${d.url}</strong>: ${d.status}
+  </div>
+`).join('');
+
         <div class="bg-white border rounded-xl px-4 py-2 shadow-sm">
           <strong>${d.url}</strong>: ${d.status}
         </div>
