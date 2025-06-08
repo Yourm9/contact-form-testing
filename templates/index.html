@@ -69,20 +69,15 @@
       const manualUrls = document.getElementById("manualInput").value.trim();
       const file = document.getElementById("fileInput").files[0];
 
-      // Clear output area
       resultsDiv.innerHTML = '<div class="text-center text-gray-500">Running...</div>';
 
-      // Send manually pasted URLs
       if (manualUrls.length > 0) {
         formData.append("manual", "true");
         formData.append("urls", manualUrls);
-
-      // Or fall back to CSV file
       } else if (file) {
         formData.append("file", file);
-
       } else {
-        resultsDiv.innerHTML = '<div class="text-red-600 text-center">Please provide either a CSV or manual URLs.</div>';
+        resultsDiv.innerHTML = '<div class="text-red-600 text-center">Please provide either a CSV file or manual URLs.</div>';
         return;
       }
 
