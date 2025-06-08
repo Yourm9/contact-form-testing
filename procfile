@@ -1,2 +1,2 @@
-worker: python bot.py
-playwright.config.json 
+worker: python3 bot.py
+worker: bash start.sh
