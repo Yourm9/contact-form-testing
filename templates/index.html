@@ -5,26 +5,59 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Contact Form Tester</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-  <div class="bg-white p-8 rounded-xl shadow-xl max-w-xl w-full">
-    <h1 class="text-2xl font-bold mb-4 text-center">🤖 Contact Form Tester</h1>
-    <form id="uploadForm" class="space-y-4">
-      <input type="file" name="file" accept=".csv" required class="block w-full p-2 border rounded" />
-      <button type="submit" class="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700 transition">Start</button>
+<body class="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen flex items-center justify-center">
+  <div class="bg-white backdrop-blur-xl bg-opacity-80 border border-gray-300 rounded-3xl shadow-2xl p-10 w-full max-w-2xl">
+    
+    <!-- 🐶 German Shepherd Image -->
+    <div class="flex justify-center mb-4">
+      <img 
+        src="https://upload.wikimedia.org/wikipedia/commons/7/76/German_Shepherd_2.jpg" 
+        alt="German Shepherd" 
+        class="w-16 h-16 object-cover rounded-full border-2 border-gray-300 shadow"
+      />
+    </div>
+
+    <h1 class="text-3xl font-semibold text-center text-gray-900 mb-6 tracking-tight">🤖 Contact Form Tester</h1>
+
+    <form id="uploadForm" class="space-y-5">
+      <input 
+        type="file" 
+        name="file" 
+        accept=".csv" 
+        required 
+        class="w-full px-4 py-2 text-gray-700 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition" 
+      />
+      <button 
+        type="submit" 
+        class="w-full bg-black text-white text-lg font-medium py-3 rounded-xl hover:bg-gray-800 transition-all duration-200 shadow-sm"
+      >
+        Start
+      </button>
     </form>
-    <div id="results" class="mt-6 text-sm"></div>
+
+    <div id="results" class="mt-8 text-sm text-gray-800 space-y-2"></div>
   </div>
+
   <script>
     const form = document.getElementById('uploadForm');
     const resultsDiv = document.getElementById('results');
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const formData = new FormData(form);
-      resultsDiv.innerHTML = 'Running...';
+      resultsDiv.innerHTML = '<div class="text-center text-gray-500">Running...</div>';
       const res = await fetch('/run', { method: 'POST', body: formData });
       const data = await res.json();
-      resultsDiv.innerHTML = data.map(d => `<div><strong>${d.url}</strong>: ${d.status}</div>`).join('');
+      resultsDiv.innerHTML = data.map(d => `
+        <div class="bg-white border rounded-xl px-4 py-2 shadow-sm">
+          <strong>${d.url}</strong>: ${d.status}
+        </div>
+      `).join('');
     });
   </script>
 </body>
