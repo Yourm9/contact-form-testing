@@ -69,7 +69,7 @@ def smart_contact_form_submitter(start_url):
                 'name': 'John Doe',
                 'email': 'john@example.com',
                 'subject': 'Quick question about landscaping',
-                'message': 'Hi there! Just wondering if you service Longparish area? Thanks!',
+                'message': 'Hi there! Just wondering if you service southern uk area? Thanks!',
                 'phone': '07800111222'
             }
 
