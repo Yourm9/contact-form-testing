@@ -14,8 +14,8 @@
 <body class="bg-gradient-to-br from-blue-100 via-indigo-200 to-purple-100 min-h-screen flex items-center justify-center">
 
   <div class="bg-white backdrop-blur-xl bg-opacity-80 border border-gray-300 rounded-3xl shadow-2xl p-10 w-full max-w-xl">
-
-    <!-- CFT Logo Badge -->
+    
+    <!-- Logo -->
     <div class="flex justify-center mb-6">
       <div class="w-20 h-20 rounded-full bg-black text-white flex items-center justify-center text-2xl font-semibold shadow-md border border-gray-400 tracking-wide">
         CFT
@@ -50,7 +50,7 @@
       </button>
     </form>
 
-    <!-- Results Display -->
+    <!-- Results -->
     <div id="results" class="mt-8 text-sm text-gray-800 space-y-2"></div>
   </div>
 
@@ -65,24 +65,28 @@
         resultsDiv.innerHTML = '<div class="text-center text-gray-500">Running...</div>';
 
         try {
-          const res = await fetch('/run', {
-            method: 'POST',
-            body: formData
-          });
-
+          const res = await fetch('/run', { method: 'POST', body: formData });
           const data = await res.json();
 
           if (!Array.isArray(data)) {
             resultsDiv.innerHTML = '<div class="text-red-500">Unexpected response from server.</div>';
-            console.log('Unexpected data:', data);
+            console.log('Unexpected response:', data);
             return;
           }
 
-          resultsDiv.innerHTML = data.map(d => `
-            <div class="bg-white border rounded-xl px-4 py-2 shadow-sm">
-              <strong>${d.url}</strong>: ${d.status}
-            </div>
-          `).join('');
+          resultsDiv.innerHTML = data.map(d => {
+            let statusText = typeof d.status === 'object' ? d.status.status || JSON.stringify(d.status) : d.status;
+            const isSuccess = statusText?.toLowerCase().includes("success");
+
+            return `
+              <div class="bg-white border rounded-xl px-4 py-2 shadow-sm">
+                <strong>${d.url}</strong>: 
+                <span class="${isSuccess ? 'text-green-600' : 'text-red-600'}" title="${statusText}">
+                  ${isSuccess ? 'Success' : 'Failed'}
+                </span>
+              </div>
+            `;
+          }).join('');
         } catch (err) {
           resultsDiv.innerHTML = '<div class="text-red-500">Error contacting server.</div>';
           console.error(err);
