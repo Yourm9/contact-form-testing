@@ -26,3 +26,7 @@ Call log:
 2025-06-10T21:11:07.282648,dcmlandscapes.co.uk,https://dcmlandscapes.co.uk/contact-us/,Form submitted successfully,"name, email, subject, message"
 2025-06-11T19:54:50.989292,militaryfencing.co.uk,https://militaryfencing.co.uk/contact-us/,Form submitted successfully,"name, email, subject, message"
 2025-06-11T19:55:23.754225,dcmlandscapes.co.uk,https://dcmlandscapes.co.uk/contact-us/,Form submitted successfully,"name, email, subject, message"
+2025-06-11T22:46:15.818673,militaryfencing.co.uk,https://militaryfencing.co.uk/contact-us/,,
+2025-06-11T22:53:01.727215,militaryfencing.co.uk,https://militaryfencing.co.uk/contact-us/,Error: ElementHandle.get_attribute: Connection closed while reading from the driver,
+2025-06-11T23:10:42.362971,militaryfencing.co.uk,https://militaryfencing.co.uk/contact-us/,Form submitted successfully,"name, email, subject, message"
+2025-06-11T23:11:15.470110,dcmlandscapes.co.uk,https://dcmlandscapes.co.uk/contact-us/,Form submitted successfully,"name, email, subject, message"
