@@ -1,38 +1,32 @@
 import time
 import random
 import csv
+import os
+import re
+import sys
 from datetime import datetime
 from urllib.parse import urljoin, urlparse
 from playwright.sync_api import sync_playwright
-import re
-import sys
 
-# Check for --headless flag in command-line args
-run_headless = '--headless' in sys.argv
-
+# Automatically headless unless overridden
+run_headless = os.environ.get("HEADLESS", "true").lower() == "true"
 
 def human_type(page, selector, text):
     page.click(selector)
     typo_made = False
     for i, char in enumerate(text):
         if not typo_made and random.random() < 0.015 and len(text) > 8:
-            # Introduce one typo, then correct it
             wrong_char = random.choice('abcdefghijklmnopqrstuvwxyz')
             page.keyboard.insert_text(wrong_char)
             time.sleep(random.uniform(0.05, 0.12))
             page.keyboard.press('Backspace')
             time.sleep(random.uniform(0.03, 0.1))
             typo_made = True
-
         page.keyboard.insert_text(char)
         time.sleep(random.uniform(0.04, 0.18))
-
-        # Occasional pause to mimic human pause
         if i > 0 and i % random.randint(5, 10) == 0:
             time.sleep(random.uniform(0.1, 0.3))
-
     time.sleep(random.uniform(0.6, 1.4))
-
 
 def log_result_to_csv(domain, contact_url, status, fields, log_file="results.csv"):
     with open(log_file, mode='a', newline='') as file:
@@ -44,7 +38,6 @@ def log_result_to_csv(domain, contact_url, status, fields, log_file="results.csv
             status,
             ", ".join(fields)
         ])
-
 
 def smart_contact_form_submitter(start_url):
     domain = urlparse(start_url).netloc
@@ -58,9 +51,7 @@ def smart_contact_form_submitter(start_url):
     }
 
     with sync_playwright() as p:
-        # Launch browser with or without headless mode based on flag
         browser = p.chromium.launch(headless=run_headless, slow_mo=0)
-
         context = browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                        "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
@@ -93,7 +84,7 @@ def smart_contact_form_submitter(start_url):
                 'name': 'John Doe',
                 'email': 'john@example.com',
                 'subject': 'Quick question about landscaping',
-                'message': 'Hi there! Just wondering if you service southern uk area? Thanks!',
+                'message': 'Hi there! Just wondering if you service southern UK area? Thanks!',
                 'phone': '07800111222'
             }
 
@@ -140,7 +131,6 @@ def smart_contact_form_submitter(start_url):
 
     return result
 
-
 def run_from_csv(file_path):
     with open(file_path, newline='') as csvfile:
         reader = csv.reader(csvfile)
@@ -150,8 +140,6 @@ def run_from_csv(file_path):
                 print(f"\n🚀 Running bot on: {url}")
                 smart_contact_form_submitter(url)
 
-
-# Run from CSV
 if __name__ == "__main__":
     filepath = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith('--') else "urls.csv"
     run_from_csv(filepath)
