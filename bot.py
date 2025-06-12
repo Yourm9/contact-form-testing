@@ -2,14 +2,15 @@ import time
 import random
 import csv
 import os
-import re
-import sys
 from datetime import datetime
 from urllib.parse import urljoin, urlparse
 from playwright.sync_api import sync_playwright
+import re
+import sys
 
-# Automatically headless unless overridden
-run_headless = os.environ.get("HEADLESS", "true").lower() == "true"
+# Force headless on server environments, allow --headless override locally
+is_server = os.environ.get("SERVER_ENV", "false").lower() == "true"
+run_headless = is_server or '--headless' in sys.argv
 
 def human_type(page, selector, text):
     page.click(selector)
@@ -22,10 +23,13 @@ def human_type(page, selector, text):
             page.keyboard.press('Backspace')
             time.sleep(random.uniform(0.03, 0.1))
             typo_made = True
+
         page.keyboard.insert_text(char)
         time.sleep(random.uniform(0.04, 0.18))
+
         if i > 0 and i % random.randint(5, 10) == 0:
             time.sleep(random.uniform(0.1, 0.3))
+
     time.sleep(random.uniform(0.6, 1.4))
 
 def log_result_to_csv(domain, contact_url, status, fields, log_file="results.csv"):
@@ -84,7 +88,7 @@ def smart_contact_form_submitter(start_url):
                 'name': 'John Doe',
                 'email': 'john@example.com',
                 'subject': 'Quick question about landscaping',
-                'message': 'Hi there! Just wondering if you service southern UK area? Thanks!',
+                'message': 'Hi there! Just wondering if you service southern uk area? Thanks!',
                 'phone': '07800111222'
             }
 
