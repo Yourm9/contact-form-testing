@@ -55,7 +55,8 @@ def smart_contact_form_submitter(start_url):
     }
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=run_headless, slow_mo=0)
+        browser = p.chromium.launch(headless=True)
+
         context = browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                        "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
