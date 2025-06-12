@@ -33,3 +33,12 @@ Call log:
 2025-06-12T17:40:57.637664,militaryfencing.co.uk,https://militaryfencing.co.uk/contact-us/,Form submitted successfully,"name, email, subject, message"
 2025-06-12T17:41:32.448898,dcmlandscapes.co.uk,https://dcmlandscapes.co.uk/contact-us/,Form submitted successfully,"name, email, subject, message"
 2025-06-12T19:44:58.194195,militaryfencing.co.uk,https://militaryfencing.co.uk/contact-us/,,
+2025-06-12T21:38:21.113656,militaryfencing.co.uk,https://militaryfencing.co.uk/contact-us/,Form submitted successfully,"name, email, subject, message"
+2025-06-12T21:38:54.816891,dcmlandscapes.co.uk,https://dcmlandscapes.co.uk/contact-us/,Form submitted successfully,"name, email, subject, message"
+2025-06-12T21:40:50.824054,militaryfencing.co.uk,https://militaryfencing.co.uk/contact-us/,"Error: Keyboard.insert_text: Target page, context or browser has been closed",
+2025-06-12T21:40:55.618474,dcmlandscapes.co.uk,https://dcmlandscapes.co.uk/contact-us/,"Error: Page.goto: Target page, context or browser has been closed
+Call log:
+  - navigating to ""https://dcmlandscapes.co.uk/contact-us/"", waiting until ""load""
+",
+2025-06-12T21:42:00.620923,militaryfencing.co.uk,https://militaryfencing.co.uk/contact-us/,Form submitted successfully,"name, email, subject, message"
+2025-06-12T21:42:33.712007,dcmlandscapes.co.uk,https://dcmlandscapes.co.uk/contact-us/,Form submitted successfully,"name, email, subject, message"
