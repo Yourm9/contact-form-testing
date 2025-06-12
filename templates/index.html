@@ -75,7 +75,11 @@
           }
 
           resultsDiv.innerHTML = data.map(d => {
-            let statusText = typeof d.status === 'object' ? d.status.status || JSON.stringify(d.status) : d.status;
+            const rawStatus = d.status;
+            const statusText = typeof rawStatus === 'object'
+              ? rawStatus.status || rawStatus.message || JSON.stringify(rawStatus)
+              : rawStatus;
+
             const isSuccess = statusText?.toLowerCase().includes("success");
 
             return `
