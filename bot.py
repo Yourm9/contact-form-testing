@@ -4,7 +4,6 @@ import csv
 import os
 from datetime import datetime
 from urllib.parse import urljoin, urlparse
-from playwright.sync_api import sync_playwright
 import re
 import sys
 
@@ -60,6 +59,9 @@ def smart_contact_form_submitter(start_url):
         result["status"] = "Skipped on server"
         log_result_to_csv(domain, None, result["status"], [])
         return result
+
+    # ✅ Import only if needed
+    from playwright.sync_api import sync_playwright
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=run_headless, slow_mo=0)
