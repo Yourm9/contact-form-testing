@@ -54,6 +54,13 @@ def smart_contact_form_submitter(start_url):
         "status": "",
     }
 
+    # 🚫 Skip browser entirely on the server
+    if is_server:
+        print(f"🚫 Skipping browser launch for {start_url} (SERVER_ENV=true)")
+        result["status"] = "Skipped on server"
+        log_result_to_csv(domain, None, result["status"], [])
+        return result
+
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=run_headless, slow_mo=0)
         context = browser.new_context(
