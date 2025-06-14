@@ -7,8 +7,38 @@ from urllib.parse import urljoin, urlparse
 from playwright.sync_api import sync_playwright
 import re
 import sys
+import requests
+import socket
 
-# Force headless on server environments, allow --headless override locally
+# Airtable configuration
+AIRTABLE_BASE_ID = 'appT3CUPasvZJBxdf'
+AIRTABLE_TABLE_NAME = 'Submission Results'
+AIRTABLE_API_KEY = 'patqDGcwLmdnmWS5k.1c645e47fcf3b5ec30627fe9fb76a78078f98dc44b8746aec6014b4bf265a738'
+
+def log_result_to_airtable(data):
+    url = f'https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}'
+    headers = {
+        'Authorization': f'Bearer {AIRTABLE_API_KEY}',
+        'Content-Type': 'application/json',
+    }
+    payload = {"fields": data}
+    try:
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+    except Exception as e:
+        print(f"⚠️ Failed to log to Airtable: {e}")
+
+def get_server_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = "Unknown"
+    finally:
+        s.close()
+    return ip
+
 is_server = os.environ.get("SERVER_ENV", "false").lower() == "true"
 run_headless = is_server or '--headless' in sys.argv
 
@@ -23,25 +53,11 @@ def human_type(page, selector, text):
             page.keyboard.press('Backspace')
             time.sleep(random.uniform(0.03, 0.1))
             typo_made = True
-
         page.keyboard.insert_text(char)
         time.sleep(random.uniform(0.04, 0.18))
-
         if i > 0 and i % random.randint(5, 10) == 0:
             time.sleep(random.uniform(0.1, 0.3))
-
     time.sleep(random.uniform(0.6, 1.4))
-
-def log_result_to_csv(domain, contact_url, status, fields, log_file="results.csv"):
-    with open(log_file, mode='a', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow([
-            datetime.now().isoformat(),
-            domain,
-            contact_url or "N/A",
-            status,
-            ", ".join(fields)
-        ])
 
 def smart_contact_form_submitter(start_url):
     domain = urlparse(start_url).netloc
@@ -56,7 +72,6 @@ def smart_contact_form_submitter(start_url):
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-
         context = browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                        "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
@@ -78,7 +93,7 @@ def smart_contact_form_submitter(start_url):
 
             if not contact_url:
                 result["status"] = "No contact page found"
-                log_result_to_csv(domain, None, result["status"], [])
+                finalise_result(result, domain)
                 return result
 
             result["contact_page"] = contact_url
@@ -89,7 +104,7 @@ def smart_contact_form_submitter(start_url):
                 'name': 'John Doe',
                 'email': 'john@example.com',
                 'subject': 'Quick question about landscaping',
-                'message': 'Hi there! Just wondering if you service southern uk area? Thanks!',
+                'message': 'Hi there! Just wondering if you service southern UK area? Thanks!',
                 'phone': '07800111222'
             }
 
@@ -109,7 +124,7 @@ def smart_contact_form_submitter(start_url):
 
             if not filled:
                 result["status"] = "No fields matched"
-                log_result_to_csv(domain, contact_url, result["status"], filled)
+                finalise_result(result, domain)
                 return result
 
             result["fields_filled"] = filled
@@ -130,11 +145,35 @@ def smart_contact_form_submitter(start_url):
         except Exception as e:
             result["status"] = f"Error: {str(e)}"
             print(f"❌ Error: {e}")
+
         finally:
-            log_result_to_csv(domain, result["contact_page"], result["status"], result["fields_filled"])
+            finalise_result(result, domain)
             browser.close()
 
     return result
+
+def finalise_result(result, domain):
+    status_raw = result["status"].lower()
+    if "successfully" in status_raw:
+        status_value = "Success"
+    elif "no contact page" in status_raw:
+        status_value = "No contact page found"
+    elif "no fields matched" in status_raw:
+        status_value = "No fields matched"
+    else:
+        status_value = "Failed"
+
+    result_data = {
+        "Submission ID": f"{domain}_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+        "Timestamp": result["timestamp"],
+        "Status": status_value,
+        "Error Type": "" if status_value == "Success" else result["status"],
+        "Message": ", ".join(result["fields_filled"]),
+        "Server IP": get_server_ip(),
+        "Retry Count": 0,
+    }
+
+    log_result_to_airtable(result_data)
 
 def run_from_csv(file_path):
     with open(file_path, newline='') as csvfile:
