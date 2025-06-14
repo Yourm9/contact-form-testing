@@ -77,22 +77,35 @@ EOF
 
 chmod +x /root/contact-form-testing/deploy.sh
 
-# --- Webhook Listener ---
-echo "🐍 Creating webhook.py..."
+# --- Webhook Listener with Logging ---
+echo "🐍 Creating webhook.py with logging..."
 cat << 'EOF' > /root/contact-form-testing/webhook.py
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import subprocess
+import logging
+
+# Set up logging to file
+logging.basicConfig(
+    filename='/var/log/webhook.log',
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+)
 
 class WebhookHandler(BaseHTTPRequestHandler):
     def do_POST(self):
+        logging.info("Webhook received. Running deploy script...")
+        try:
+            subprocess.run(["/root/contact-form-testing/deploy.sh"], check=True)
+            logging.info("Deploy completed successfully.")
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Deploy script failed: {e}")
         self.send_response(200)
         self.end_headers()
         self.wfile.write(b"Webhook received. Deploying...")
-        subprocess.run(["/root/contact-form-testing/deploy.sh"])
 
 if __name__ == "__main__":
+    logging.info("🚀 Webhook server starting on port 9000...")
     server = HTTPServer(('0.0.0.0', 9000), WebhookHandler)
-    print("🚀 Webhook server running on port 9000...")
     server.serve_forever()
 EOF
 
