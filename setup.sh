@@ -1,10 +1,21 @@
 #!/bin/bash
 
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
+export APT_LISTCHANGES_FRONTEND=none
+
 # Exit on errors
 set -e
 
+# Wait if another apt process is running (e.g. cloud-init)
+echo "⏳ Waiting for apt to be free..."
+while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+    sleep 1
+done
+
 # Update system
-apt update && apt upgrade -y
+apt update
+apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade -y
 
 # Install system dependencies
 apt install -y python3 python3-venv python3-pip git curl unzip wget \
