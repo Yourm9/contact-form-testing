@@ -32,8 +32,8 @@ playwright install
 playwright install-deps
 
 # Run app with Gunicorn
-pkill gunicorn || true
-gunicorn -w 4 -b 0.0.0.0:5000 app:app --timeout 180
+# pkill gunicorn || true
+# gunicorn -w 4 -b 0.0.0.0:5000 app:app --timeout 180
 
 echo "🔧 Setting up systemd service..."
 
