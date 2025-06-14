@@ -34,3 +34,28 @@ playwright install-deps
 # Run app with Gunicorn
 pkill gunicorn || true
 gunicorn -w 4 -b 0.0.0.0:5000 app:app --timeout 180
+
+echo "🔧 Setting up systemd service..."
+
+cat <<EOF | sudo tee /etc/systemd/system/cft.service
+[Unit]
+Description=Gunicorn Contact Form Tester Service
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/root/contact-form-testing
+Environment="PATH=/root/contact-form-testing/venv/bin"
+ExecStart=/root/contact-form-testing/venv/bin/gunicorn -w 4 -b 0.0.0.0:5000 app:app --timeout 180
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reexec
+sudo systemctl daemon-reload
+sudo systemctl enable cft
+sudo systemctl start cft
+
+echo "✅ Systemd service created and started (cft.service)"
