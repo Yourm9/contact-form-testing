@@ -7,11 +7,28 @@ export APT_LISTCHANGES_FRONTEND=none
 # Exit on errors
 set -e
 
-# Wait if another apt process is running (e.g. cloud-init)
-echo "⏳ Waiting for apt to be free..."
+# Wait for apt to be free with timeout and auto-kill
+echo "⏳ Waiting for apt to be free (timeout after 5 minutes)..."
+timeout=300
+elapsed=0
+
 while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
     sleep 1
+    elapsed=$((elapsed + 1))
+    if [ "$elapsed" -ge "$timeout" ]; then
+        echo "⚠️ apt is still locked after $timeout seconds. Killing any stuck process..."
+        pid=$(lsof -t /var/lib/dpkg/lock-frontend)
+        if [ -n "$pid" ]; then
+            echo "🔪 Killing process $pid..."
+            kill -9 "$pid"
+        fi
+        break
+    fi
 done
+
+# Auto-fix if dpkg is interrupted
+echo "🛠 Checking for interrupted dpkg state..."
+dpkg --configure -a || true
 
 # Update system
 apt update
