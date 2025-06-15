@@ -13,7 +13,7 @@ import socket
 # Airtable configuration
 AIRTABLE_BASE_ID = 'appT3CUPasvZJBxdf'
 AIRTABLE_TABLE_NAME = 'Submission Results'
-AIRTABLE_API_KEY = 'patqDGcwLmdnmWS5k.1c645e47fcf3b5ec30627fe9fb76a78078f98dc44b8746aec6014b4bf265a738'
+AIRTABLE_API_KEY = 'patqYGRYwqAmTC8B8.08a5c910f7592dc71077da2230065eae0ab9af1575b02c26c809e0a09bee7c94'
 
 def log_result_to_airtable(data):
     url = f'https://api.airtable.com/v0/{AIRTABLE_BASE_ID}/{AIRTABLE_TABLE_NAME}'
@@ -26,7 +26,7 @@ def log_result_to_airtable(data):
         response = requests.post(url, json=payload, headers=headers)
         response.raise_for_status()
     except Exception as e:
-        print(f"⚠️ Failed to log to Airtable: {e}")
+        print(f"Failed to log to Airtable: {e}")
 
 def get_server_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -71,7 +71,7 @@ def smart_contact_form_submitter(start_url):
     }
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(headless=False, slow_mo=100)
         context = browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                        "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
@@ -80,7 +80,7 @@ def smart_contact_form_submitter(start_url):
         page = context.new_page()
 
         try:
-            print(f"🌐 Visiting: {start_url}")
+            print(f"\nRunning bot on: {start_url}")
             page.goto(start_url, timeout=20000)
 
             contact_links = page.query_selector_all('a[href]')
@@ -97,7 +97,7 @@ def smart_contact_form_submitter(start_url):
                 return result
 
             result["contact_page"] = contact_url
-            print(f"🔗 Contact page found: {contact_url}")
+            print(f"Contact page found: {contact_url}")
             page.goto(contact_url, timeout=20000)
 
             field_map = {
@@ -128,23 +128,35 @@ def smart_contact_form_submitter(start_url):
                 return result
 
             result["fields_filled"] = filled
-            print(f"📝 Fields typed: {filled}")
+            print(f"Fields typed: {filled}")
 
-            submit_btn = page.query_selector('form button[type="submit"], form input[type="submit"]')
-            if submit_btn:
-                time.sleep(random.uniform(1, 2.5))
-                submit_btn.hover()
-                time.sleep(0.5)
+            submit_btn = page.query_selector('input[type="submit"]')
+
+            try:
+                page.wait_for_function(
+                    "(btn) => { const r = btn.getBoundingClientRect(); return r.width > 0 && r.height > 0; }",
+                    arg=submit_btn,
+                    timeout=10000
+                )
+                print("Submit button is visible — clicking")
                 submit_btn.click()
                 page.wait_for_timeout(3000)
                 result["status"] = "Form submitted successfully"
-                print("✅ Form submitted")
-            else:
-                result["status"] = "Submit button not found"
+                print("Form submitted")
+            except Exception as e:
+                print(f"Scroll+click failed: {e}. Falling back to JS click.")
+                try:
+                    page.evaluate("document.querySelector('input[type=submit]').click()")
+                    page.wait_for_timeout(3000)
+                    result["status"] = "Form submitted via JS"
+                    print("Form submitted via JS click")
+                except Exception as err:
+                    result["status"] = f"Error: {str(err)}"
+                    print(f"Error: {err}")
 
         except Exception as e:
             result["status"] = f"Error: {str(e)}"
-            print(f"❌ Error: {e}")
+            print(f"Error: {e}")
 
         finally:
             finalise_result(result, domain)
@@ -154,7 +166,7 @@ def smart_contact_form_submitter(start_url):
 
 def finalise_result(result, domain):
     status_raw = result["status"].lower()
-    if "successfully" in status_raw:
+    if "successfully" in status_raw or "via js" in status_raw:
         status_value = "Success"
     elif "no contact page" in status_raw:
         status_value = "No contact page found"
@@ -175,15 +187,18 @@ def finalise_result(result, domain):
 
     log_result_to_airtable(result_data)
 
+
 def run_from_csv(file_path):
     with open(file_path, newline='') as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
             url = row[0].strip()
             if url:
-                print(f"\n🚀 Running bot on: {url}")
+                print(f"\nRunning bot on: {url}")
                 smart_contact_form_submitter(url)
 
 if __name__ == "__main__":
-    filepath = sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith('--') else "urls.csv"
-    run_from_csv(filepath)
+    if len(sys.argv) > 1:
+        smart_contact_form_submitter(sys.argv[1])
+    else:
+        run_from_csv("urls.csv")
