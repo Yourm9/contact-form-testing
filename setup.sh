@@ -30,11 +30,13 @@ done
 echo "🛠 Checking for interrupted dpkg state..."
 dpkg --configure -a || true
 
-# Update system
-apt update
+# Update system and try fix-missing on error
+echo "📦 Updating system packages..."
+apt update --fix-missing
 apt -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade -y
 
 # Install system dependencies
+echo "📥 Installing system libraries..."
 apt install -y python3 python3-venv python3-pip git curl unzip wget \
     libatk1.0-0 libatk-bridge2.0-0 libcups2 libatspi2.0-0 \
     libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
@@ -56,8 +58,9 @@ pip install --upgrade pip
 pip install -r requirements.txt || pip install flask playwright gunicorn
 
 # Install Playwright browsers and dependencies
-playwright install
-playwright install-deps
+echo "🎭 Installing Playwright and dependencies..."
+playwright install || echo "⚠️ playwright install failed, check manually"
+playwright install-deps || echo "⚠️ playwright install-deps failed, continuing anyway"
 
 # Create and enable cft systemd service
 echo "🔧 Setting up systemd service..."
@@ -137,7 +140,7 @@ if __name__ == "__main__":
     server.serve_forever()
 EOF
 
-# --- Webhook Service ---
+# --- Webhook systemd service ---
 echo "🛠️ Creating webhook.service..."
 cat << 'EOF' > /etc/systemd/system/webhook.service
 [Unit]
