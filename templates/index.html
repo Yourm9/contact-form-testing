@@ -1,37 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Contact Form Submission Tool</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans h-screen flex overflow-hidden">
+<body class="bg-gray-50 text-gray-800 font-sans h-screen overflow-hidden flex flex-col md:flex-row">
+
+  <!-- Mobile Header with Menu Toggle -->
+  <header class="md:hidden bg-white border-b px-6 py-4 flex justify-between items-center">
+    <div class="text-2xl font-bold text-orange-500">CFS</div>
+    <button id="menuToggle" class="text-3xl text-orange-500 focus:outline-none">☰</button>
+  </header>
+
+  <!-- Sidebar Overlay (mobile only) -->
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-30 z-40 hidden md:hidden"></div>
 
   <!-- Sidebar -->
-  <aside class="w-64 bg-white border-r hidden md:flex flex-col">
-    <div class="p-6 text-xl font-bold text-orange-500">CFS</div>
-    <nav class="px-4 space-y-2">
-      <a href="#" class="block px-3 py-2 rounded text-gray-700 hover:bg-orange-100">🏠 Home</a>
-      <a href="#" class="block px-3 py-2 rounded bg-orange-100 text-orange-600 font-semibold">📢 Campaigns</a>
-      <a href="#" class="block px-3 py-2 rounded hover:bg-orange-100">🧰 Templates</a>
-      <a href="#" class="block px-3 py-2 rounded hover:bg-orange-100">⚙️ Settings</a>
-    </nav>
-    <div class="mt-auto p-4 text-xs text-gray-500">
+  <aside id="sidebar" class="fixed z-50 top-0 left-0 h-full w-64 bg-white border-r transform -translate-x-full transition-transform duration-300 md:translate-x-0 md:relative flex flex-col justify-between">
+    <div>
+      <div class="p-6 text-2xl font-bold text-orange-500 hidden md:block">CFS</div>
+      <nav class="px-4 space-y-2 mt-4 md:mt-0">
+        <a href="#" class="block px-3 py-2 rounded text-gray-700 hover:bg-orange-100">🏠 Home</a>
+        <a href="#" class="block px-3 py-2 rounded bg-orange-100 text-orange-600 font-semibold">📢 Campaigns</a>
+        <a href="#" class="block px-3 py-2 rounded hover:bg-orange-100">🧰 Templates</a>
+        <a href="#" class="block px-3 py-2 rounded hover:bg-orange-100">⚙️ Settings</a>
+      </nav>
+    </div>
+    <div class="p-4 text-xs text-gray-500">
       <p class="mb-2">48 credits left</p>
       <p class="text-sm text-gray-700">yourm888@gmail.com</p>
+      <a href="/logout" class="mt-4 inline-block text-red-500 hover:underline">🔒 Logout</a>
     </div>
   </aside>
 
   <!-- Main Content -->
-  <main class="flex-1 flex flex-col">
+  <main class="flex-1 flex flex-col overflow-auto">
     <!-- Top Header -->
     <header class="bg-white border-b px-6 py-4 flex justify-between items-center">
       <div>
         <h1 class="text-lg font-semibold">Campaigns</h1>
         <p class="text-sm text-gray-500">Personal account / <span class="text-gray-800 font-medium">BF</span> / Campaigns</p>
       </div>
-      <button class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded text-sm">🚀 Launch Campaign</button>
+      <button class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded text-sm sm:text-sm text-xs sm:px-4 px-3 whitespace-nowrap">
+        Launch Campaign
+      </button>
     </header>
 
     <!-- Upload + Campaign Table -->
@@ -41,6 +55,7 @@
         <h2 class="text-lg font-semibold mb-4">Upload CSV File</h2>
         <input type="file" name="file" class="block w-full mb-4 border border-gray-300 rounded p-2" required />
         <button type="submit" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">Run Bot</button>
+        <p id="statusText" class="text-sm text-gray-500 mt-2 hidden"></p>
       </form>
 
       <!-- Results Table -->
@@ -66,26 +81,50 @@
   <script>
     const form = document.getElementById('uploadForm');
     const resultsBody = document.getElementById('resultsBody');
+    const sidebar = document.getElementById('sidebar');
+    const menuToggle = document.getElementById('menuToggle');
+    const overlay = document.getElementById('sidebarOverlay');
+    const statusText = document.getElementById('statusText');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      resultsBody.innerHTML = '';
+      statusText.classList.remove("hidden");
+      statusText.textContent = "Running bot...";
+
       const formData = new FormData(form);
       const response = await fetch('/run', {
         method: 'POST',
         body: formData
       });
+
       const data = await response.json();
 
-      resultsBody.innerHTML = '';
       data.forEach(row => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="border-t p-2">${row.url}</td>
-          <td class="border-t p-2">${row.status?.status || row.status}</td>
-          <td class="border-t p-2">${row.status?.status || ''}</td>
+          <td class="border-t p-2">${row.status || ''}</td>
+          <td class="border-t p-2">${row.message || ''}</td>
         `;
         resultsBody.appendChild(tr);
       });
+
+      statusText.textContent = "Finished.";
+      setTimeout(() => {
+        statusText.classList.add("hidden");
+      }, 4000);
+    });
+
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.remove('-translate-x-full');
+      overlay.classList.remove('hidden');
+    });
+
+    overlay.addEventListener('click', () => {
+      sidebar.classList.add('-translate-x-full');
+      overlay.classList.add('hidden');
     });
   </script>
 </body>

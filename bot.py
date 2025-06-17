@@ -71,7 +71,7 @@ def smart_contact_form_submitter(start_url):
     }
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False, slow_mo=100)
+        browser = p.chromium.launch(headless=run_headless, slow_mo=100)
         context = browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                        "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
@@ -130,29 +130,37 @@ def smart_contact_form_submitter(start_url):
             result["fields_filled"] = filled
             print(f"Fields typed: {filled}")
 
-            submit_btn = page.query_selector('input[type="submit"]')
+            # Prioritize form-contained submit buttons
+            forms = page.query_selector_all("form")
+            submit_clicked = False
 
-            try:
-                page.wait_for_function(
-                    "(btn) => { const r = btn.getBoundingClientRect(); return r.width > 0 && r.height > 0; }",
-                    arg=submit_btn,
-                    timeout=10000
-                )
-                print("Submit button is visible — clicking")
-                submit_btn.click()
-                page.wait_for_timeout(3000)
-                result["status"] = "Form submitted successfully"
-                print("Form submitted")
-            except Exception as e:
-                print(f"Scroll+click failed: {e}. Falling back to JS click.")
+            for form in forms:
+                submit = form.query_selector('input[type="submit"], button[type="submit"]')
+                if submit:
+                    try:
+                        form.scroll_into_view_if_needed()
+                        page.wait_for_function(
+                            "(btn) => { const r = btn.getBoundingClientRect(); return r.width > 0 && r.height > 0; }",
+                            arg=submit,
+                            timeout=10000
+                        )
+                        print("🖱 Attempting form-contained submit button click")
+                        submit.click()
+                        page.wait_for_timeout(3000)
+                        result["status"] = "Form submitted successfully"
+                        submit_clicked = True
+                        break
+                    except Exception as e:
+                        print(f"⚠️ Click failed: {e}")
+
+            if not submit_clicked:
                 try:
-                    page.evaluate("document.querySelector('input[type=submit]').click()")
+                    print("🖱 Attempting JS click fallback")
+                    page.evaluate("document.querySelector('input[type=submit], button[type=submit]').click()")
                     page.wait_for_timeout(3000)
                     result["status"] = "Form submitted via JS"
-                    print("Form submitted via JS click")
                 except Exception as err:
                     result["status"] = f"Error: {str(err)}"
-                    print(f"Error: {err}")
 
         except Exception as e:
             result["status"] = f"Error: {str(e)}"
@@ -186,7 +194,6 @@ def finalise_result(result, domain):
     }
 
     log_result_to_airtable(result_data)
-
 
 def run_from_csv(file_path):
     with open(file_path, newline='') as csvfile:
